@@ -15,6 +15,7 @@ const scanSecurityHeaders = async (target) => {
     checkXContentTypeOptions(headers, findings);
     checkXFrameOptions(headers, findings);
     checkReferrerPolicy(headers, findings);
+    checkCookies(headers, findings);
 
     return {
         statusCode: response.status,
@@ -190,6 +191,107 @@ const checkReferrerPolicy = (headers, findings) => {
             recommendation:
                 "Configure a restrictive Referrer-Policy.",
         });
+    }
+};
+
+const checkCookies = (headers, findings) => {
+    const setCookie = headers["set-cookie"];
+
+    if (!setCookie || setCookie.length === 0) {
+        return;
+    }
+
+    for (const cookie of setCookie) {
+        analyzeCookie(cookie, findings);
+    }
+};
+
+const analyzeCookie = (cookie, findings) => {
+    const parts = cookie.split(";").map((part) => part.trim());
+
+    const cookieName = parts[0]?.split("=")[0] || "Unknown";
+
+    const attributes = parts.slice(1).map((part) => {
+        const [name, ...valueParts] = part.split("=");
+
+        return {
+            name: name.toLowerCase(),
+            value: valueParts.join("="),
+        };
+    });
+
+    const hasSecure = attributes.some(
+        (attribute) => attribute.name === "secure"
+    );
+
+    const hasHttpOnly = attributes.some(
+        (attribute) => attribute.name === "httponly"
+    );
+
+    const sameSite = attributes.find(
+        (attribute) => attribute.name === "samesite"
+    );
+
+    if (!hasSecure) {
+        findings.push({
+            type: "insecure-cookie",
+            severity: "medium",
+            title: `Cookie "${cookieName}" is missing Secure`,
+            description:
+                "The cookie does not have the Secure attribute, which means it may be transmitted over an unencrypted HTTP connection.",
+            recommendation:
+                "Add the Secure attribute to cookies that should only be transmitted over HTTPS.",
+        });
+    }
+
+    if (!hasHttpOnly) {
+        findings.push({
+            type: "insecure-cookie",
+            severity: "medium",
+            title: `Cookie "${cookieName}" is missing HttpOnly`,
+            description:
+                "The cookie does not have the HttpOnly attribute, which allows client-side JavaScript to access it.",
+            recommendation:
+                "Add the HttpOnly attribute to sensitive cookies that do not need to be accessed by JavaScript.",
+        });
+    }
+
+    if (!sameSite) {
+        findings.push({
+            type: "insecure-cookie",
+            severity: "low",
+            title: `Cookie "${cookieName}" is missing SameSite`,
+            description:
+                "The cookie does not explicitly define a SameSite policy.",
+            recommendation:
+                "Configure an appropriate SameSite value such as Lax or Strict.",
+        });
+    } else {
+        const sameSiteValue = sameSite.value.toLowerCase();
+
+        if (!["strict", "lax", "none"].includes(sameSiteValue)) {
+            findings.push({
+                type: "insecure-cookie",
+                severity: "low",
+                title: `Cookie "${cookieName}" has an invalid SameSite value`,
+                description:
+                    "The cookie contains a SameSite value that is not recognized.",
+                recommendation:
+                    "Use SameSite=Strict, SameSite=Lax, or SameSite=None as appropriate.",
+            });
+        }
+
+        if (sameSiteValue === "none" && !hasSecure) {
+            findings.push({
+                type: "insecure-cookie",
+                severity: "high",
+                title: `Cookie "${cookieName}" uses SameSite=None without Secure`,
+                description:
+                    "Cookies using SameSite=None must also use the Secure attribute in modern browsers.",
+                recommendation:
+                    "Add the Secure attribute when using SameSite=None.",
+            });
+        }
     }
 };
 
