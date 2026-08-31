@@ -10,6 +10,10 @@ const {
     scanSecurityHeaders,
 } = require("../services/header-scanner.service");
 
+const {
+    calculateSecurityScore,
+} = require("../services/security-score.service");
+
 const createScan = async (req, res) => {
     try {
         const { target } = req.body;
@@ -25,8 +29,11 @@ const createScan = async (req, res) => {
         try {
             const result = await scanSecurityHeaders(target);
 
+            const score = calculateSecurityScore(result.findings);
+
             scan.status = "completed";
             scan.findings = result.findings;
+            scan.score = score;
 
             await scan.save();
 
@@ -36,6 +43,7 @@ const createScan = async (req, res) => {
                     id: scan._id,
                     target: scan.target,
                     status: scan.status,
+                    score: scan.score,
                     findings: scan.findings,
                     createdAt: scan.createdAt,
                     updatedAt: scan.updatedAt,
@@ -101,7 +109,7 @@ const getScanById = async (req, res) => {
             _id: req.params.id,
             user: req.user,
         }).select(
-            "_id target status findings createdAt updatedAt"
+            "_id target status score findings createdAt updatedAt"
         );
 
         if (!scan) {
