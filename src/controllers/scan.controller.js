@@ -2,29 +2,69 @@ const mongoose = require("mongoose");
 
 const Scan = require("../models/scan.model");
 
+const {
+    validateTarget,
+} = require("../services/target-validation.service");
+
+const {
+    scanSecurityHeaders,
+} = require("../services/header-scanner.service");
+
 const createScan = async (req, res) => {
     try {
         const { target } = req.body;
 
+        await validateTarget(target);
+
         const scan = await Scan.create({
             user: req.user,
             target,
+            status: "running",
         });
 
-        return res.status(201).json({
-            message: "Scan created successfully",
-            scan: {
-                id: scan._id,
-                target: scan.target,
-                status: scan.status,
-                createdAt: scan.createdAt,
-            },
-        });
+        try {
+            const result = await scanSecurityHeaders(target);
+
+            scan.status = "completed";
+            scan.findings = result.findings;
+
+            await scan.save();
+
+            return res.status(201).json({
+                message: "Scan completed successfully",
+                scan: {
+                    id: scan._id,
+                    target: scan.target,
+                    status: scan.status,
+                    findings: scan.findings,
+                    createdAt: scan.createdAt,
+                    updatedAt: scan.updatedAt,
+                },
+            });
+        } catch (scannerError) {
+            console.error(
+                "Scanner error:",
+                scannerError
+            );
+
+            scan.status = "failed";
+
+            await scan.save();
+
+            return res.status(502).json({
+                message: "Unable to scan target",
+                scan: {
+                    id: scan._id,
+                    target: scan.target,
+                    status: scan.status,
+                },
+            });
+        }
     } catch (error) {
         console.error("Create scan error:", error);
 
-        return res.status(500).json({
-            message: "Internal server error",
+        return res.status(400).json({
+            message: error.message,
         });
     }
 };
