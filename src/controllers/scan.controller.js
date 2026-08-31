@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const Scan = require("../models/scan.model");
 
 const createScan = async (req, res) => {
@@ -47,6 +49,14 @@ const getScans = async (req, res) => {
 
 const getScanById = async (req, res) => {
     try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid scan ID",
+            })
+        }
+
         const scan = await Scan.findOne({
             _id: req.params.id,
             user: req.user,
