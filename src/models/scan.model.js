@@ -1,0 +1,60 @@
+const mongoose = require("mongoose");
+
+const scanSchema = new mongoose.Schema(
+    {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+
+        target: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+
+        status: {
+            type: String,
+            enum: ["pending", "running", "completed", "failed"],
+            default: "pending",
+        },
+
+        findings: [
+            {
+                type: {
+                    type: String,
+                    required: true,
+                },
+
+                severity: {
+                    type: String,
+                    enum: ["info", "low", "medium", "high", "critical"],
+                    required: true,
+                },
+
+                title: {
+                    type: String,
+                    required: true,
+                },
+
+                description: {
+                    type: String,
+                    required: true,
+                },
+
+                recommendation: {
+                    type: String,
+                    required: true,
+                },
+            },
+        ],
+    },
+    {
+        timestamps: true,
+    }
+);
+
+const Scan = mongoose.model("Scan", scanSchema);
+
+module.exports = Scan;
