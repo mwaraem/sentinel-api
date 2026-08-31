@@ -14,6 +14,10 @@ const {
     calculateSecurityScore,
 } = require("../services/security-score.service");
 
+const {
+    runScan,
+} = require("../services/scan.service");
+
 const createScan = async (req, res) => {
     try {
         const { target } = req.body;
@@ -27,26 +31,19 @@ const createScan = async (req, res) => {
         });
 
         try {
-            const result = await scanSecurityHeaders(target);
-
-            const score = calculateSecurityScore(result.findings);
-
-            scan.status = "completed";
-            scan.findings = result.findings;
-            scan.score = score;
-
-            await scan.save();
+            const completedScan =
+                await runScan(scan);
 
             return res.status(201).json({
                 message: "Scan completed successfully",
                 scan: {
-                    id: scan._id,
-                    target: scan.target,
-                    status: scan.status,
-                    score: scan.score,
-                    findings: scan.findings,
-                    createdAt: scan.createdAt,
-                    updatedAt: scan.updatedAt,
+                    id: completedScan._id,
+                    target: completedScan.target,
+                    status: completedScan.status,
+                    score: completedScan.score,
+                    findings: completedScan.findings,
+                    createdAt: completedScan.createdAt,
+                    updatedAt: completedScan.updatedAt,
                 },
             });
         } catch (scannerError) {
@@ -69,7 +66,10 @@ const createScan = async (req, res) => {
             });
         }
     } catch (error) {
-        console.error("Create scan error:", error);
+        console.error(
+            "Create scan error:",
+            error
+        );
 
         return res.status(400).json({
             message: error.message,
