@@ -55,7 +55,59 @@ const normalizeFindings = (findings = []) => {
     return findings.map(normalizeFinding);
 };
 
+const aggregateFindings = (findings = []) => {
+    const grouped = new Map();
+
+    for (const finding of findings) {
+        const key = `${finding.id}:${finding.scanner}`;
+
+        if (!grouped.has(key)) {
+            grouped.set(key, {
+                ...finding,
+                occurences: 1,
+                metadata: {
+                    ...finding.metadata,
+                },
+            });
+
+            continue;
+        }
+
+        const existing = grouped.get(key);
+
+        existing.occurrences += 1;
+
+        if (
+            finding.metadata &&
+            Object.keys(finding.metadata).length > 0
+        ) {
+            for (const [key, value] of Object.entries(
+                finding.metadata
+            )) {
+                if (!(key in existing.metadata)) {
+                    existing.metadata[key] = value;
+                    continue;
+                }
+
+                if (
+                    Array.isArray(
+                        existing.metadata[key]
+                    )
+                ) {
+                    existing.metadata[key] = [
+                        existing.metadata[key],
+                        value,
+                    ];
+                }
+            }
+        }
+    }
+
+    return Array.from(grouped.values());
+};
+
 module.exports = {
     normalizeFinding,
     normalizeFindings,
+    aggregateFindings,
 };

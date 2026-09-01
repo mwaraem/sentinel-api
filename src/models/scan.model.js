@@ -48,6 +48,12 @@ const scanSchema = new mongoose.Schema(
                     default: null,
                 },
 
+                occurrences: {
+                    type: Number,
+                    default: 1,
+                    min: 1,
+                },
+
                 metadata: {
                     type: mongoose.Schema.Types.Mixed,
                     default: {},

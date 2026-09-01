@@ -18,6 +18,7 @@ const {
 
 const {
     normalizeFindings,
+    aggregateFindings,
 } = require("./finding.service");
 
 const scanners = [
@@ -77,13 +78,15 @@ const runScan = async (scan) => {
 
     const normalizedFindings = normalizeFindings(findings);
 
+    const aggregatedFindings = aggregateFindings(normalizedFindings);
+
     const score = calculateSecurityScore(
-        normalizedFindings
+        aggregatedFindings
     );
 
     scan.status = "completed";
     scan.score = score;
-    scan.findings = normalizedFindings;
+    scan.findings = aggregatedFindings;
 
     await scan.save();
 
