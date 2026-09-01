@@ -67,13 +67,10 @@ const runScan = async (scan) => {
             );
 
             findings.push({
-                type: "scanner-error",
-                severity: "info",
-                title: "A security scanner failed",
-                description:
-                    "One of Sentinel's security scanners could not complete successfully.",
-                recommendation:
-                    "Retry the scan and investigate the scanner error if the problem persists.",
+                id: "scanner-error",
+                metadata: {
+                    scanner: scanner.name,
+                }
             });
         }
     }

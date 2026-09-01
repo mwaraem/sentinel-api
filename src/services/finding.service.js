@@ -1,39 +1,53 @@
-const VALID_SEVERITIES = [
-    "critical",
-    "high",
-    "medium",
-    "low",
-    "info",
-];
+const {
+    findingDefinitions,
+} = require("../data/finding-definitions");
 
 const normalizeFinding = (finding) => {
     if (!finding || typeof finding !== "object") {
         throw new Error("Invalid finding");
     }
 
-    const severity = String(
-        finding.severity || "info"
-    ).toLowerCase();
-
-    if (!VALID_SEVERITIES.includes(severity)) {
+    if (!finding.id) {
         throw new Error(
-            `Invalid finding severity: ${severity}`
+            "Finding is missing an ID"
+        );
+    }
+
+    const definition =
+        findingDefinitions[finding.id];
+
+    if (!definition) {
+        throw new Error(
+            `Unknown finding ID: ${finding.id}`
         );
     }
 
     return {
+        id: finding.id,
+
         scanner: finding.scanner || "unknown",
-        type: finding.type || "unknown",
-        severity,
-        title:
-            finding.title ||
-            "Security finding detected",
+
+        type: definition.category,
+
+        severity: definition.severity,
+
+        title: definition.title,
+
         description:
-            finding.description ||
-            "Sentinal detected a potential security issue.",
+            definition.description,
+
+        impact:
+            definition.impact,
+
         recommendation:
-            finding.recommendation ||
-            "Review the finding and apply the recommended security controls.",
+            definition.recommendation,
+
+        cwe: definition.cwe || null,
+
+        owasp: definition.owasp || null,
+
+        metadata:
+            finding.metadata || {},
     };
 };
 

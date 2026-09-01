@@ -28,6 +28,31 @@ const scanSchema = new mongoose.Schema(
 
         findings: [
             {
+                id: {
+                    type: String,
+                    required: true,
+                },
+
+                impact: {
+                    type: String,
+                    required: true,
+                },
+
+                cwe: {
+                    type: String,
+                    default: null,
+                },
+
+                owasp: {
+                    type: String,
+                    default: null,
+                },
+
+                metadata: {
+                    type: mongoose.Schema.Types.Mixed,
+                    default: {},
+                },
+
                 type: {
                     type: String,
                     required: true,

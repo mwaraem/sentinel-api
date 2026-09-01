@@ -28,13 +28,7 @@ const checkContentSecurityPolicy = (headers, findings) => {
 
     if (!value) {
         findings.push({
-            type: "missing-security-header",
-            severity: "high",
-            title: "Content Security Policy (CSP) is missing",
-            description:
-                "The target does not define a Content-Security-Policy header.",
-            recommendation:
-                "Implement a restrictive Content-Security-Policy appropriate for the application.",
+            id: "missing-csp",
         });
 
         return;
@@ -42,25 +36,13 @@ const checkContentSecurityPolicy = (headers, findings) => {
 
     if (value.includes("'unsafe-inline'")) {
         findings.push({
-            type: "weak-security-header",
-            severity: "medium",
-            title: "CSP allows unsafe inline scripts",
-            description:
-                "The Content-Security-Policy allows 'unsafe-inline', which weakens protection against certain cross-site scripting attacks.",
-            recommendation:
-                "Avoid 'unsafe-inline' where possible and use nonces or hashes for inline scripts.",
+            id: "csp-unsafe-inline",
         });
     }
 
     if (value.includes("'unsafe-eval'")) {
         findings.push({
-            type: "weak-security-header",
-            severity: "medium",
-            title: "CSP allows unsafe eval",
-            description:
-                "The Content-Security-Policy allows 'unsafe-eval', which can weaken protection against script injection.",
-            recommendation:
-                "Remove 'unsafe-eval' unless it is strictly required by the application.",
+            id: "csp-unsafe-eval",
         });
     }
 };
@@ -70,13 +52,7 @@ const checkStrictTransportSecurity = (headers, findings) => {
 
     if (!value) {
         findings.push({
-            type: "missing-security-header",
-            severity: "medium",
-            title: "HTTP Strict Transport Security (HSTS) is missing",
-            description:
-                "The target does not define a Strict-Transport-Security header.",
-            recommendation:
-                "Configure HSTS to enforce HTTPS connections.",
+            id: "missing-hsts",
         });
 
         return;
@@ -86,13 +62,7 @@ const checkStrictTransportSecurity = (headers, findings) => {
 
     if (!maxAgeMatch) {
         findings.push({
-            type: "weak-security-header",
-            severity: "medium",
-            title: "HSTS has no valid max-age",
-            description:
-                "The Strict-Transport-Security header does not contain a valid max-age directive.",
-            recommendation:
-                "Configure HSTS with an appropriate max-age value.",
+            id: "hsts-no-max-age",
         });
 
         return;
@@ -102,13 +72,7 @@ const checkStrictTransportSecurity = (headers, findings) => {
 
     if (maxAge < 31536000) {
         findings.push({
-            type: "weak-security-header",
-            severity: "low",
-            title: "HSTS max-age is too short",
-            description:
-                "The HSTS max-age is less than one year.",
-            recommendation:
-                "Consider using an HSTS max-age of at least 31536000 seconds.",
+            id: "hsts-max-age-too-short",
         });
     }
 };
@@ -118,13 +82,7 @@ const checkXContentTypeOptions = (headers, findings) => {
 
     if (!value) {
         findings.push({
-            type: "missing-security-header",
-            severity: "low",
-            title: "X-Content-Type-Options is missing",
-            description:
-                "The target does not define X-Content-Type-Options.",
-            recommendation:
-                "Set X-Content-Type-Options to nosniff.",
+            id: "missing-x-content-type-options",
         });
 
         return;
@@ -132,13 +90,7 @@ const checkXContentTypeOptions = (headers, findings) => {
 
     if (value.toLowerCase() !== "nosniff") {
         findings.push({
-            type: "weak-security-header",
-            severity: "low",
-            title: "X-Content-Type-Options is incorrectly configured",
-            description:
-                "X-Content-Type-Options is present but is not set to nosniff.",
-            recommendation:
-                "Set X-Content-Type-Options to nosniff.",
+            id: "x-content-type-options-incorrect",
         });
     }
 };
@@ -148,13 +100,7 @@ const checkXFrameOptions = (headers, findings) => {
 
     if (!value) {
         findings.push({
-            type: "missing-security-header",
-            severity: "medium",
-            title: "X-Frame-Options is missing",
-            description:
-                "The target does not define X-Frame-Options.",
-            recommendation:
-                "Set X-Frame-Options to DENY or SAMEORIGIN, or use an appropriate CSP frame-ancestors policy.",
+            id: "missing-x-frame-options",
         });
 
         return;
@@ -167,13 +113,7 @@ const checkXFrameOptions = (headers, findings) => {
         normalizedValue !== "SAMEORIGIN"
     ) {
         findings.push({
-            type: "weak-security-header",
-            severity: "medium",
-            title: "X-Frame-Options is incorrectly configured",
-            description:
-                "X-Frame-Options contains an unsupported or unsafe value.",
-            recommendation:
-                "Use DENY or SAMEORIGIN, or configure CSP frame-ancestors.",
+            id: "x-frame-options-incorrect",
         });
     }
 };
@@ -183,13 +123,7 @@ const checkReferrerPolicy = (headers, findings) => {
 
     if (!value) {
         findings.push({
-            type: "missing-security-header",
-            severity: "low",
-            title: "Referrer-Policy is missing",
-            description:
-                "The target does not define a Referrer-Policy header.",
-            recommendation:
-                "Configure a restrictive Referrer-Policy.",
+            id: "missing-referrer-policy",
         });
     }
 };
@@ -234,62 +168,32 @@ const analyzeCookie = (cookie, findings) => {
 
     if (!hasSecure) {
         findings.push({
-            type: "insecure-cookie",
-            severity: "medium",
-            title: `Cookie "${cookieName}" is missing Secure`,
-            description:
-                "The cookie does not have the Secure attribute, which means it may be transmitted over an unencrypted HTTP connection.",
-            recommendation:
-                "Add the Secure attribute to cookies that should only be transmitted over HTTPS.",
+            id: "cookie-missing-secure",
         });
     }
 
     if (!hasHttpOnly) {
         findings.push({
-            type: "insecure-cookie",
-            severity: "medium",
-            title: `Cookie "${cookieName}" is missing HttpOnly`,
-            description:
-                "The cookie does not have the HttpOnly attribute, which allows client-side JavaScript to access it.",
-            recommendation:
-                "Add the HttpOnly attribute to sensitive cookies that do not need to be accessed by JavaScript.",
+            id: "cookie-missing-httponly",
         });
     }
 
     if (!sameSite) {
         findings.push({
-            type: "insecure-cookie",
-            severity: "low",
-            title: `Cookie "${cookieName}" is missing SameSite`,
-            description:
-                "The cookie does not explicitly define a SameSite policy.",
-            recommendation:
-                "Configure an appropriate SameSite value such as Lax or Strict.",
+            id: "cookie-missing-samesite",
         });
     } else {
         const sameSiteValue = sameSite.value.toLowerCase();
 
         if (!["strict", "lax", "none"].includes(sameSiteValue)) {
             findings.push({
-                type: "insecure-cookie",
-                severity: "low",
-                title: `Cookie "${cookieName}" has an invalid SameSite value`,
-                description:
-                    "The cookie contains a SameSite value that is not recognized.",
-                recommendation:
-                    "Use SameSite=Strict, SameSite=Lax, or SameSite=None as appropriate.",
+                id: "invalid-samesite-value",
             });
         }
 
         if (sameSiteValue === "none" && !hasSecure) {
             findings.push({
-                type: "insecure-cookie",
-                severity: "high",
-                title: `Cookie "${cookieName}" uses SameSite=None without Secure`,
-                description:
-                    "Cookies using SameSite=None must also use the Secure attribute in modern browsers.",
-                recommendation:
-                    "Add the Secure attribute when using SameSite=None.",
+                id: "cookie-samesite-none-without-secure",
             });
         }
     }

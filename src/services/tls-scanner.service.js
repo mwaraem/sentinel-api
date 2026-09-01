@@ -15,13 +15,7 @@ const scanTls = (target) => {
                 secure: false,
                 findings: [
                     {
-                        type: "transport-security",
-                        severity: "high",
-                        title: "Target does not use HTTPS",
-                        description:
-                            "The target is using HTTP instead of HTTPS.",
-                        recommendation:
-                            "Configure the application to use HTTPS and redirect HTTP traffic to HTTPS.",
+                        id: "http-not-secure",
                     },
                 ],
             });
@@ -45,13 +39,7 @@ const scanTls = (target) => {
 
                     if (!certificate || !certificate.valid_to) {
                         findings.push({
-                            type: "tls-certificate",
-                            severity: "high",
-                            title: "TLS certificate could not be inspected",
-                            description:
-                                "Sentinel could not retrieve a valid TLS certificate from the target.",
-                            recommendation:
-                                "Verify that the target has a properly configured TLS certificate.",
+                            id: "tls-certificate-error",
                         });
                     } else {
                         const expiryDate = new Date(
@@ -62,13 +50,7 @@ const scanTls = (target) => {
 
                         if (expiryDate < now) {
                             findings.push({
-                                type: "tls-certificate",
-                                severity: "high",
-                                title: "TLS certificate has expired",
-                                description:
-                                    "The TLS certificate presented by the target is expired.",
-                                recommendation:
-                                    "Renew and correctly configure the TLS certificate.",
+                                id: "tls-certificate-expired",
                             });
                         }
 
@@ -81,15 +63,7 @@ const scanTls = (target) => {
                             daysUntilExpiry <= 30
                         ) {
                             findings.push({
-                                type: "tls-certificate",
-                                severity: "medium",
-                                title: "TLS certificate expires soon",
-                                description:
-                                    `The TLS certificate expires in approximately ${Math.ceil(
-                                        daysUntilExpiry
-                                    )} days.`,
-                                recommendation:
-                                    "Renew the TLS certificate before it expires.",
+                                id: "tls-certificate-expiring",
                             });
                         }
                     }
@@ -102,13 +76,7 @@ const scanTls = (target) => {
                         protocol === "TLSv1.1"
                     ) {
                         findings.push({
-                            type: "weak-tls",
-                            severity: "high",
-                            title: "Deprecated TLS protocol detected",
-                            description:
-                                `The target is using ${protocol}, which is deprecated.`,
-                            recommendation:
-                                "Configure the server to support modern TLS versions such as TLS 1.2 or TLS 1.3.",
+                            id: "weak-tls",
                         });
                     }
 
