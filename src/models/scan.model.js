@@ -26,6 +26,38 @@ const scanSchema = new mongoose.Schema(
             max: 100,
         },
 
+        summary: {
+            total: {
+                type: Number,
+                default: 0,
+            },
+
+            critical: {
+                type: Number,
+                default: 0,
+            },
+
+            high: {
+                type: Number,
+                default: 0,
+            },
+
+            medium: {
+                type: Number,
+                default: 0,
+            },
+
+            low: {
+                type: Number,
+                default: 0,
+            },
+
+            info: {
+                type: Number,
+                default: 0,
+            },
+        },
+
         findings: [
             {
                 id: {

@@ -1,6 +1,10 @@
 const Scan = require("../models/scan.model");
 
 const {
+    createScanSummary,
+} = require("./scan-summary.service");
+
+const {
     scanSecurityHeaders,
 } = require("./header-scanner.service");
 
@@ -80,6 +84,10 @@ const runScan = async (scan) => {
 
     const aggregatedFindings = aggregateFindings(normalizedFindings);
 
+    const summary = createScanSummary(
+        aggregatedFindings
+    );
+
     const score = calculateSecurityScore(
         aggregatedFindings
     );
@@ -87,6 +95,7 @@ const runScan = async (scan) => {
     scan.status = "completed";
     scan.score = score;
     scan.findings = aggregatedFindings;
+    scan.summary = summary;
 
     await scan.save();
 
