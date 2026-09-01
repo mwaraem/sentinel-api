@@ -16,6 +16,10 @@ const {
     scanCors,
 } = require("./cors-scanner.service");
 
+const {
+    normalizeFindings,
+} = require("./finding.service");
+
 const scanners = [
     {
         name: "security-headers",
@@ -32,16 +36,28 @@ const scanners = [
 ];
 
 const runScan = async (scan) => {
-    const results = await Promise.allSettled([
-        scanSecurityHeaders(scan.target),
-        scanTls(scan.target),
-    ]);
+    const results = await Promise.allSettled(
+        scanners.map((scanner) => 
+            scanner.scan(scan.target)
+                .then((result) => ({
+                    scanner: scanner.name,
+                    ...result,
+                }))
+        )
+    );
 
     const findings = [];
 
     for (const result of results) {
         if (result.status === "fulfilled") {
-            findings.push(...result.value.findings);
+            const scannerFindings = result.value.findings.map(
+                (finding) => ({
+                    ...finding,
+                    scanner: result.value.scanner,
+                })
+            );
+
+            findings.push(...scannerFindings);
         }
 
         if (result.status === "rejected") {
@@ -62,13 +78,15 @@ const runScan = async (scan) => {
         }
     }
 
+    const normalizedFindings = normalizeFindings(findings);
+
     const score = calculateSecurityScore(
-        findings
+        normalizedFindings
     );
 
     scan.status = "completed";
     scan.score = score;
-    scan.findings = findings;
+    scan.findings = normalizedFindings;
 
     await scan.save();
 

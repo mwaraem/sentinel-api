@@ -20,6 +20,12 @@ const scanSchema = new mongoose.Schema(
             default: "pending",
         },
 
+        score: {
+            type: Number,
+            min: 0,
+            max: 100,
+        },
+
         findings: [
             {
                 type: {
@@ -29,7 +35,11 @@ const scanSchema = new mongoose.Schema(
 
                 severity: {
                     type: String,
-                    enum: ["info", "low", "medium", "high", "critical"],
+                    enum: ["critical",
+                    "high",
+                    "medium",
+                    "low",
+                    "info",],
                     required: true,
                 },
 
