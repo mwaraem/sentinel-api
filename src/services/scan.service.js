@@ -84,8 +84,13 @@ const runScan = async (scan) => {
 
     const aggregatedFindings = aggregateFindings(normalizedFindings);
 
-    const summary = createScanSummary(
+    const scoreResult = calculateSecurityScore(
         aggregatedFindings
+    );
+
+    const summary = createScanSummary(
+        aggregatedFindings,
+        scoreResult.score
     );
 
     const score = calculateSecurityScore(
@@ -93,7 +98,8 @@ const runScan = async (scan) => {
     );
 
     scan.status = "completed";
-    scan.score = score;
+    scan.score = scoreResult.score;
+    scan.scoreBreakdown = scoreResult.breakdown;
     scan.findings = aggregatedFindings;
     scan.summary = summary;
 

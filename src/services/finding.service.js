@@ -63,8 +63,17 @@ const aggregateFindings = (findings = []) => {
 
         if (!grouped.has(key)) {
             grouped.set(key, {
-                ...finding,
-                occurences: 1,
+                id: finding.id,
+                scanner: finding.scanner,
+                type: finding.type,
+                severity: finding.severity,
+                title: finding.title,
+                description: finding.description,
+                impact: finding.impact,
+                recommendation: finding.recommendation,
+                cwe: finding.cwe,
+                owasp: finding.owasp,
+                occurrences: 1,
                 metadata: {
                     ...finding.metadata,
                 },

@@ -58,6 +58,33 @@ const scanSchema = new mongoose.Schema(
             },
         },
 
+        scoreBreakdown: {
+            critical: {
+                type: Number,
+                default: 0,
+            },
+
+            high: {
+                type: Number,
+                default: 0,
+            },
+
+            medium: {
+                type: Number,
+                default: 0,
+            },
+
+            low: {
+                type: Number,
+                default: 0,
+            },
+
+            info: {
+                type: Number,
+                default: 0,
+            },
+        },
+
         findings: [
             {
                 id: {

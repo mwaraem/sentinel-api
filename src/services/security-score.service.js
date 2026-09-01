@@ -6,16 +6,39 @@ const SEVERITY_DEDUCTIONS = {
     info: 0,
 };
 
-const calculateSecurityScore = (findings) => {
+const calculateSecurityScore = (findings = []) => {
     let score = 100;
 
-    for (const finding of findings) {
-        const deduction = SEVERITY_DEDUCTIONS[finding.severity] || 0;
+    const breakdown = {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        info: 0,
+    };
 
-        score -= deduction;
+    for (const finding of findings) {
+        const severity = finding.severity;
+
+        if (!(severity in breakdown)) {
+            continue;
+        }
+
+        breakdown[severity] += 1;
+
+        score -=
+            SEVERITY_DEDUCTIONS[severity] || 0;
     }
 
-    return Math.max(0, score);
+    score = Math.max(
+        0,
+        Math.min(100, score)
+    );
+
+    return {
+        score,
+        breakdown,
+    };
 };
 
 const getScoreRating = (score) => {
