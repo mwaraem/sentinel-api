@@ -13,18 +13,35 @@ const {
 } = require("./security-score.service");
 
 const runScan = async (scan) => {
-    const headerResult = await scanSecurityHeaders(
-        scan.target
-    );
+    const results = await Promise.allSettled([
+        scanSecurityHeaders(scan.target),
+        scanTls(scan.target),
+    ]);
 
-    const tlsResult = await scanTls(
-        scan.target
-    );
+    const findings = [];
 
-    const findings = [
-        ...headerResult.findings,
-        ...tlsResult.findings,
-    ];
+    for (const result of results) {
+        if (result.status === "fulfilled") {
+            findings.push(...result.value.findings);
+        }
+
+        if (result.status === "rejected") {
+            console.error(
+                "Scanner failed:",
+                result.reason
+            );
+
+            findings.push({
+                type: "scanner-error",
+                severity: "info",
+                title: "A security scanner failed",
+                description:
+                    "One of Sentinel's security scanners could not complete successfully.",
+                recommendation:
+                    "Retry the scan and investigate the scanner error if the problem persists.",
+            });
+        }
+    }
 
     const score = calculateSecurityScore(
         findings
