@@ -12,6 +12,25 @@ const {
     calculateSecurityScore,
 } = require("./security-score.service");
 
+const {
+    scanCors,
+} = require("./cors-scanner.service");
+
+const scanners = [
+    {
+        name: "security-headers",
+        scan: scanSecurityHeaders,
+    },
+    {
+        name: "tls",
+        scan: scanTls,
+    },
+    {
+        name: "cors",
+        scan: scanCors,
+    },
+];
+
 const runScan = async (scan) => {
     const results = await Promise.allSettled([
         scanSecurityHeaders(scan.target),
